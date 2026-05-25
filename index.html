@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settlement Calculator</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --surface: #111315;
+      --surface-container: #1b1d20;
+      --surface-container-high: #25272b;
+      --surface-container-highest: #303237;
+      --primary: #d0bcff;
+      --on-primary: #381e72;
+      --secondary: #e8def8;
+      --tertiary: #ffb4ab;
+      --mint: #9fdac5;
+      --outline: #938f99;
+      --outline-soft: rgba(147, 143, 153, 0.26);
+      --text: #f4eff4;
+      --text-muted: #cac4d0;
+      --success: #b6f0c1;
+      --shadow: rgba(0, 0, 0, 0.36);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 14px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    main {
+      width: min(100%, 680px);
+      margin: 0 auto;
+      padding: 16px;
+      border: 1px solid var(--outline-soft);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(27, 29, 32, 0.96), rgba(22, 24, 27, 0.96));
+      box-shadow: 0 18px 44px var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 5vw, 2rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(159, 218, 197, 0.14);
+      color: var(--mint);
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .panel {
+      padding: 10px;
+      border: 1px solid var(--outline-soft);
+      border-radius: 22px;
+      background: var(--surface-container);
+    }
+
+    #inputs {
+      display: grid;
+      gap: 9px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(112px, 0.75fr);
+      gap: 9px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .field-label {
+      padding-inline: 4px;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    input {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      padding: 11px 13px;
+      background: var(--surface-container-high);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.98rem;
+      outline: none;
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    input::placeholder {
+      color: rgba(202, 196, 208, 0.68);
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      background: var(--surface-container-highest);
+      box-shadow: 0 0 0 3px rgba(208, 188, 255, 0.15);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+
+    button {
+      min-height: 46px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 22px;
+      background: var(--primary);
+      color: var(--on-primary);
+      font: inherit;
+      font-size: 0.96rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(208, 188, 255, 0.18);
+      transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.06);
+      box-shadow: 0 10px 22px rgba(208, 188, 255, 0.24);
+    }
+
+    button:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    #output {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--outline-soft);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(48, 50, 55, 0.86), rgba(37, 39, 43, 0.86));
+    }
+
+    .output-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      letter-spacing: 0;
+    }
+
+    .count {
+      color: var(--tertiary);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .empty,
+    .settled {
+      margin: 0;
+      padding: 13px;
+      border-radius: 16px;
+      background: rgba(16, 16, 24, 0.36);
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .settled {
+      color: var(--success);
+    }
+
+    .settlements {
+      display: grid;
+      gap: 8px;
+    }
+
+    .settlement {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 16px;
+      background: rgba(208, 188, 255, 0.12);
+    }
+
+    .route {
+      min-width: 0;
+      color: var(--secondary);
+      font-size: 0.95rem;
+      line-height: 1.3;
+    }
+
+    .route strong {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .amount {
+      color: var(--primary);
+      font-size: 1rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 10px;
+      }
+
+      main {
+        padding: 12px;
+        border-radius: 22px;
+      }
+
+      .header {
+        display: block;
+      }
+
+      .badge {
+        display: inline-flex;
+        margin-top: 10px;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .actions,
+      button {
+        width: 100%;
+      }
+
+      .settlement {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <section class="header" aria-labelledby="title">
+      <div>
+        <h1 id="title">Settlement Calculator</h1>
+        <p class="subtitle">Enter Splitwise-style balances and settle the fewest payments.</p>
+      </div>
+      <div class="badge">Notion ready</div>
+    </section>
+
+    <section class="panel" aria-label="Balances">
+      <div id="inputs">
+        <div class="row">
+          <label>
+            <span class="field-label">Name</span>
+            <input type="text" placeholder="Name" value="A" autocomplete="off" />
+          </label>
+          <label>
+            <span class="field-label">Balance</span>
+            <input type="number" placeholder="Balance" value="0" inputmode="decimal" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            <span class="field-label">Name</span>
+            <input type="text" placeholder="Name" value="B" autocomplete="off" />
+          </label>
+          <label>
+            <span class="field-label">Balance</span>
+            <input type="number" placeholder="Balance" value="0" inputmode="decimal" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            <span class="field-label">Name</span>
+            <input type="text" placeholder="Name" value="C" autocomplete="off" />
+          </label>
+          <label>
+            <span class="field-label">Balance</span>
+            <input type="number" placeholder="Balance" value="0" inputmode="decimal" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>
+            <span class="field-label">Name</span>
+            <input type="text" placeholder="Name" value="D" autocomplete="off" />
+          </label>
+          <label>
+            <span class="field-label">Balance</span>
+            <input type="number" placeholder="Balance" value="0" inputmode="decimal" />
+          </label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" onclick="calculateSettlements()">Calculate</button>
+      </div>
+    </section>
+
+    <section id="output" aria-live="polite">
+      <div class="output-title">
+        <h2>Settlement Summary</h2>
+      </div>
+      <p class="empty">Your payment plan will appear here.</p>
+    </section>
+  </main>
+
+  <script>
+    const currencyFormatter = new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2
+    });
+    const EPSILON = 0.005;
+
+    function formatAmount(amount) {
+      return currencyFormatter.format(amount);
+    }
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[character]));
+    }
+
+    function calculateSettlements() {
+      const rows = document.querySelectorAll(".row");
+      const balances = [];
+
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const name = inputs[0].value.trim();
+        const balance = Number(inputs[1].value);
+
+        if (!name || !Number.isFinite(balance) || balance === 0) {
+          return;
+        }
+
+        balances.push({ name, balance });
+      });
+
+      const creditors = balances
+        .filter(person => person.balance > 0)
+        .map(person => ({ ...person }));
+
+      const debtors = balances
+        .filter(person => person.balance < 0)
+        .map(person => ({
+          ...person,
+          balance: Math.abs(person.balance)
+        }));
+
+      const settlements = [];
+      let i = 0;
+      let j = 0;
+
+      while (i < debtors.length && j < creditors.length) {
+        const amount = Math.min(debtors[i].balance, creditors[j].balance);
+
+        settlements.push({
+          from: debtors[i].name,
+          to: creditors[j].name,
+          amount
+        });
+
+        debtors[i].balance = Math.max(0, debtors[i].balance - amount);
+        creditors[j].balance = Math.max(0, creditors[j].balance - amount);
+
+        if (debtors[i].balance <= EPSILON) i++;
+        if (creditors[j].balance <= EPSILON) j++;
+      }
+
+      const output = document.getElementById("output");
+
+      if (settlements.length === 0) {
+        output.innerHTML = `
+          <div class="output-title">
+            <h2>Settlement Summary</h2>
+          </div>
+          <p class="settled">All settled. No payments needed.</p>
+        `;
+        return;
+      }
+
+      output.innerHTML = `
+        <div class="output-title">
+          <h2>Settlement Summary</h2>
+          <span class="count">${settlements.length} payment${settlements.length === 1 ? "" : "s"}</span>
+        </div>
+        <div class="settlements">
+          ${settlements.map(settlement => `
+            <div class="settlement">
+              <div class="route">
+                <strong>${escapeHtml(settlement.from)}</strong> pays <strong>${escapeHtml(settlement.to)}</strong>
+              </div>
+              <div class="amount">${formatAmount(settlement.amount)}</div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
